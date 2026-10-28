@@ -1,26 +1,571 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My First Website</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1120">
+  <title>CloudPanel | User Management</title>
+
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #111b2e;
+      --panel2: #17243a;
+      --border: #263650;
+      --text: #eef4ff;
+      --muted: #94a8c5;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --red: #f87171;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 system-ui, sans-serif;
+    }
+
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .sidebar {
+      background: #0e1728;
+      border-bottom: 1px solid var(--border);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -.6px;
+    }
+
+    .brand span { color: var(--blue); }
+    .subtitle { color: var(--muted); font-size: 12px; }
+
+    main {
+      max-width: 1250px;
+      margin: auto;
+      padding: 32px 22px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
+    }
+
+    h1 {
+      font-size: clamp(26px, 4vw, 36px);
+      letter-spacing: -1px;
+      margin: 0 0 5px;
+    }
+
+    h2 { font-size: 18px; margin: 0 0 18px; }
+    .muted { color: var(--muted); }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fbbf24;
+    }
+
+    .dot.online { background: var(--green); }
+    .dot.offline { background: var(--red); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .card, .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      min-width: 0;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .6px;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 800;
+      margin-top: 8px;
+    }
+
+    .stat-note { color: var(--muted); font-size: 12px; }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(260px, .8fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      color: var(--text);
+      background: #0b1425;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--blue); }
+    .search { flex: 1; min-width: 160px; }
+
+    .btn {
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 14px;
+      background: var(--panel2);
+      color: var(--text);
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .btn-danger {
+      background: #321a29;
+      border-color: #7f303b;
+      color: #fecaca;
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: wait;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 13px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+
+    td { font-size: 13px; }
+    .user-id { color: var(--muted); }
+
+    .empty {
+      color: var(--muted);
+      padding: 24px 8px;
+      text-align: center;
+    }
+
+    .form-group { margin-bottom: 15px; }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .full { width: 100%; }
+
+    .message {
+      min-height: 24px;
+      margin: 12px 0;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .message.error { color: var(--red); }
+    .message.success { color: var(--green); }
+
+    .footer {
+      text-align: center;
+      padding: 28px 10px 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 780px) {
+      .content { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+      main { padding: 22px 14px; }
+      .card, .panel { padding: 17px; }
+    }
+  </style>
 </head>
+
 <body>
-    <header>
-        <h1>My First Website</h1>
-    </header>
+  <header class="sidebar">
+    <div>
+      <div class="brand">Devops<span>Dashboard</span></div>
+      <div class="subtitle">AWS EC2 · Node.js · PostgreSQL</div>
+    </div>
 
-    <main>
-        <h2>Welcome!</h2>
-        <p>I am learning AWS, Linux, and DevOps.</p>
-        <button onclick="alert('Website is working!')">
-            Click Me
-        </button>
-    </main>
+    <div class="status">
+      <span id="statusDot" class="dot"></span>
+      <span id="apiStatus">Checking API...</span>
+    </div>
+  </header>
 
-    <footer>
-        <p>My AWS deployment project - 2026</p>
+  <main>
+    <section class="topbar">
+      <div>
+        <h1>User Management</h1>
+        <div class="muted">Manage your users from one dashboard.</div>
+      </div>
+      <button class="btn" id="refreshBtn" type="button">
+        ↻ Refresh data
+      </button>
+    </section>
+
+    <section class="stats">
+      <article class="card">
+        <div class="stat-label">TOTAL USERS</div>
+        <div class="stat-number" id="totalUsers">—</div>
+        <div class="stat-note">Users stored in your database</div>
+      </article>
+
+      <article class="card">
+        <div class="stat-label">API STATUS</div>
+        <div class="stat-number" id="apiStat" style="font-size:26px">
+          Checking
+        </div>
+        <div class="stat-note">Express API availability</div>
+      </article>
+
+      <article class="card">
+        <div class="stat-label">DATABASE</div>
+        <div class="stat-number" style="font-size:26px">PostgreSQL</div>
+        <div class="stat-note">Your existing EC2 database</div>
+      </article>
+    </section>
+
+    <section class="content">
+      <article class="panel">
+        <h2>Users</h2>
+
+        <div class="toolbar">
+          <input
+            class="search"
+            id="search"
+            type="search"
+            placeholder="Search name, email or ID..."
+            aria-label="Search users"
+          >
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="userRows">
+              <tr>
+                <td colspan="4" class="empty">Loading users...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="listMessage" class="message" role="status" aria-live="polite"></div>
+      </article>
+
+      <article class="panel">
+        <h2>Add a user</h2>
+
+        <form id="userForm">
+          <div class="form-group">
+            <label for="name">Full name</label>
+            <input
+              id="name"
+              name="name"
+              maxlength="100"
+              required
+              placeholder="Enter full name"
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              maxlength="255"
+              required
+              placeholder="name@example.com"
+            >
+          </div>
+
+          <button class="btn btn-primary full" id="addBtn" type="submit">
+            + Add user
+          </button>
+        </form>
+
+        <div id="formMessage" class="message" role="status" aria-live="polite"></div>
+
+        <p class="muted" style="font-size:12px">
+          New records are saved to your existing PostgreSQL database.
+        </p>
+      </article>
+    </section>
+
+    <footer class="footer">
+      CloudPanel · Hosted on AWS EC2 · Nginx + Express + PostgreSQL
     </footer>
+  </main>
+
+  <script>
+    // Existing Nginx proxy route. Do not change the backend or database.
+    const API = '/api/users';
+    let users = [];
+
+    const $ = id => document.getElementById(id);
+
+    function showMessage(id, text, type = '') {
+      const element = $(id);
+      element.textContent = text;
+      element.className = 'message' + (type ? ' ' + type : '');
+    }
+
+    function setApiStatus(online) {
+      $('apiStatus').textContent = online ? 'API reachable' : 'API unavailable';
+      $('apiStat').textContent = online ? 'Online' : 'Offline';
+      $('apiStat').style.color = online ? 'var(--green)' : 'var(--red)';
+      $('statusDot').classList.toggle('online', online);
+      $('statusDot').classList.toggle('offline', !online);
+    }
+
+    async function request(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+          ...options.headers
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with HTTP ${response.status}`);
+      }
+
+      if (response.status === 204) return null;
+      return response.json();
+    }
+
+    function renderUsers() {
+      const query = $('search').value.trim().toLowerCase();
+
+      const filtered = users.filter(user =>
+        String(user.name || '').toLowerCase().includes(query) ||
+        String(user.email || '').toLowerCase().includes(query) ||
+        String(user.id).includes(query)
+      );
+
+      $('totalUsers').textContent = users.length;
+
+      const tbody = $('userRows');
+      tbody.replaceChildren();
+
+      if (filtered.length === 0) {
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+
+        cell.colSpan = 4;
+        cell.className = 'empty';
+        cell.textContent = users.length
+          ? 'No matching users found.'
+          : 'No users yet. Add your first user.';
+
+        row.appendChild(cell);
+        tbody.appendChild(row);
+        return;
+      }
+
+      for (const user of filtered) {
+        const row = document.createElement('tr');
+
+        const id = document.createElement('td');
+        id.className = 'user-id';
+        id.textContent = user.id;
+
+        const name = document.createElement('td');
+        name.textContent = user.name;
+
+        const email = document.createElement('td');
+        email.textContent = user.email;
+
+        const action = document.createElement('td');
+        const button = document.createElement('button');
+
+        button.type = 'button';
+        button.className = 'btn btn-danger';
+        button.textContent = 'Delete';
+        button.addEventListener('click', () => deleteUser(user.id, button));
+
+        action.appendChild(button);
+        row.append(id, name, email, action);
+        tbody.appendChild(row);
+      }
+    }
+
+    async function loadUsers() {
+      $('refreshBtn').disabled = true;
+      showMessage('listMessage', 'Loading users...');
+
+      try {
+        const data = await request(API);
+
+        if (!Array.isArray(data)) {
+          throw new Error('Unexpected response from the users API');
+        }
+
+        users = data;
+        setApiStatus(true);
+        renderUsers();
+
+        showMessage(
+          'listMessage',
+          `Successfully loaded ${users.length} user(s).`,
+          'success'
+        );
+      } catch (error) {
+        setApiStatus(false);
+        $('totalUsers').textContent = '—';
+
+        const tbody = $('userRows');
+        tbody.replaceChildren();
+
+        const row = document.createElement('tr');
+        const cell = document.createElement('td');
+
+        cell.colSpan = 4;
+        cell.className = 'empty';
+        cell.textContent = 'Could not load users. Check the API and refresh.';
+
+        row.appendChild(cell);
+        tbody.appendChild(row);
+
+        showMessage('listMessage', error.message, 'error');
+      } finally {
+        $('refreshBtn').disabled = false;
+      }
+    }
+
+    async function deleteUser(id, button) {
+      if (!confirm(`Delete user #${id}? This permanently removes the record.`)) {
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        await request(`${API}/${encodeURIComponent(id)}`, {
+          method: 'DELETE'
+        });
+
+        showMessage('listMessage', `User #${id} deleted.`, 'success');
+        await loadUsers();
+      } catch (error) {
+        showMessage('listMessage', `Delete failed: ${error.message}`, 'error');
+        button.disabled = false;
+      }
+    }
+
+    $('userForm').addEventListener('submit', async event => {
+      event.preventDefault();
+
+      const name = $('name').value.trim();
+      const email = $('email').value.trim();
+
+      if (!name || !email) {
+        showMessage('formMessage', 'Enter both name and email.', 'error');
+        return;
+      }
+
+      $('addBtn').disabled = true;
+      showMessage('formMessage', 'Saving user...');
+
+      try {
+        await request(API, {
+          method: 'POST',
+          body: JSON.stringify({ name, email })
+        });
+
+        $('userForm').reset();
+
+        showMessage('formMessage', 'User added successfully.', 'success');
+        await loadUsers();
+      } catch (error) {
+        showMessage(
+          'formMessage',
+          `Could not add user: ${error.message}`,
+          'error'
+        );
+      } finally {
+        $('addBtn').disabled = false;
+      }
+    });
+
+    $('search').addEventListener('input', renderUsers);
+    $('refreshBtn').addEventListener('click', loadUsers);
+
+    loadUsers();
+  </script>
 </body>
 </html>
