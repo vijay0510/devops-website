@@ -241,6 +241,54 @@
       main { padding: 22px 14px; }
       .card, .panel { padding: 17px; }
     }
+
+.hidden {
+  display: none !important;
+}
+
+.gallery-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.image-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.image-preview {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.image-name {
+  margin-top: 10px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.gallery-empty {
+  padding: 50px 20px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
   </style>
 </head>
 
@@ -260,14 +308,24 @@
   <main>
     <section class="topbar">
       <div>
-        <h1>User Management</h1>
-        <div class="muted">Manage your users from one dashboard.</div>
-      </div>
-      <button class="btn" id="refreshBtn" type="button">
-        ↻ Refresh data
-      </button>
-    </section>
+       <h1>User Management</h1>
+<div class="muted">Manage your users from one dashboard.</div>
+</div>
 
+<div style="display:flex; gap:10px; flex-wrap:wrap;">
+  <button class="btn" id="usersBtn" type="button">
+    Users
+  </button>
+
+  <button class="btn" id="imagesBtn" type="button">
+    Images
+  </button>
+
+  <button class="btn" id="refreshBtn" type="button">
+    ↻ Refresh data
+  </button>
+</div>
+</section>
     <section class="stats">
       <article class="card">
         <div class="stat-label">TOTAL USERS</div>
@@ -364,7 +422,29 @@
         </p>
       </article>
     </section>
+        <!-- Image Gallery -->
+    <section id="imageGallery" class="hidden">
+      <article class="panel">
+        <div class="gallery-toolbar">
+          <div>
+            <h2>Image Gallery</h2>
+            <p class="muted">View images stored in Amazon S3.</p>
+          </div>
 
+          <button class="btn" id="refreshImagesBtn" type="button">
+            ↻ Refresh images
+          </button>
+        </div>
+
+        <div id="galleryGrid" class="gallery-grid">
+          <div class="gallery-empty">
+            <h3>No images available</h3>
+            <p>Images uploaded to Amazon S3 will appear here.</p>
+          </div>
+        </div>
+      </article>
+    </section>
+    <!-- Image Gallery -->
     <footer class="footer">
       CloudPanel · Hosted on AWS EC2 · Nginx + Express + PostgreSQL
     </footer>
@@ -564,6 +644,114 @@
 
     $('search').addEventListener('input', renderUsers);
     $('refreshBtn').addEventListener('click', loadUsers);
+    
+
+
+// Load images from the backend, which retrieves them from S3
+async function loadImages() {
+  const galleryGrid = $('galleryGrid');
+
+  galleryGrid.innerHTML = `
+    <div class="gallery-empty">
+      <h3>Loading images...</h3>
+      <p>Please wait.</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/api/images');
+
+    if (!response.ok) {
+      throw new Error(`API returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const images = data.images || [];
+
+    galleryGrid.innerHTML = '';
+
+    if (images.length === 0) {
+      galleryGrid.innerHTML = `
+        <div class="gallery-empty">
+          <h3>No images available</h3>
+          <p>Upload JPG, PNG, GIF or WebP files to your S3 images folder.</p>
+        </div>
+      `;
+      return;
+    }
+
+    images.forEach(image => {
+      const card = document.createElement('div');
+      card.className = 'gallery-card';
+
+      const img = document.createElement('img');
+      img.src = image.url;
+      img.alt = image.name;
+      img.loading = 'lazy';
+
+      const details = document.createElement('div');
+      details.className = 'gallery-image-details';
+
+      const name = document.createElement('h3');
+      name.textContent = image.name;
+
+      const size = document.createElement('p');
+      size.textContent = `${(image.size / 1024).toFixed(2)} KB`;
+
+      details.appendChild(name);
+      details.appendChild(size);
+
+      card.appendChild(img);
+      card.appendChild(details);
+
+      galleryGrid.appendChild(card);
+    });
+
+  } catch (error) {
+    console.error('Failed to load S3 images:', error);
+
+    galleryGrid.innerHTML = `
+      <div class="gallery-empty">
+        <h3>Unable to load images</h3>
+        <p>Check the backend API and S3 permissions.</p>
+      </div>
+    `;
+  }
+}
+
+    // Dashboard navigation
+    const userSections = document.querySelectorAll('.stats, .content');
+    const gallery = $('imageGallery');
+
+    function showDashboardView(view) {
+      const showImages = view === 'images';
+
+      userSections.forEach(section => {
+        section.classList.toggle('hidden', showImages);
+      });
+
+      gallery.classList.toggle('hidden', !showImages);
+
+      document.querySelector('.topbar h1').textContent =
+        showImages ? 'Image Gallery' : 'User Management';
+
+      document.querySelector('.topbar .muted').textContent =
+        showImages
+          ? 'View images stored in Amazon S3.'
+          : 'Manage your users from one dashboard.';
+    }
+
+    $('imagesBtn').addEventListener('click', () => {
+  showDashboardView('images');
+  loadImages();
+});
+    $('usersBtn').addEventListener('click', () => {
+      showDashboardView('users');
+    });
+
+$('refreshImagesBtn').addEventListener('click', loadImages);
+    // Keep this as the last initialization call
+    loadUsers();
 
     loadUsers();
   </script>

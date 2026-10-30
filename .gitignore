@@ -3,3 +3,12 @@ node_modules/
 .env.*
 !.env.example
 *.pem
+
+# Local backup files
+*.backup
+
+# Local test files
+test-images/
+
+# Local AWS IAM policy files
+ec2-trust-policy.json
