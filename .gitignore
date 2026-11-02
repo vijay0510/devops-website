@@ -12,3 +12,8 @@ test-images/
 
 # Local AWS IAM policy files
 ec2-trust-policy.json
+*.log
+*.step1-backup
+*.profile-backup
+*.before-profile-ui
+nodesource_setup.sh
