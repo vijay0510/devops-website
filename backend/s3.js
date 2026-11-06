@@ -4,6 +4,7 @@ const {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   DeleteObjectCommand
 } = require('@aws-sdk/client-s3');
 
@@ -52,7 +53,52 @@ async function getImageUrl(key) {
     expiresIn: 3600
   });
 }
+// Generate URL only when thumbnail exists
+async function getThumbnailUrl(profileKey) {
+  if (!profileKey) return null;
 
+  const filename = profileKey.split('/').pop();
+  const nameWithoutExtension = filename.substring(
+    0,
+    filename.lastIndexOf('.')
+  );
+
+  const thumbnailKey = `thumbnails/${nameWithoutExtension}.jpg`;
+
+  try {
+    await s3.send(new HeadObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: thumbnailKey
+    }));
+
+    return await getImageUrl(thumbnailKey);
+
+  } catch (error) {
+    if (
+      error.name === 'NotFound' ||
+      error.name === 'NoSuchKey' ||
+      error.$metadata?.httpStatusCode === 404
+    ) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+// Generate temporary URL for profile thumbnail
+async function getThumbnailUrl(profileKey) {
+  if (!profileKey) return null;
+
+  const filename = profileKey.split('/').pop();
+  const nameWithoutExtension = filename.substring(
+    0,
+    filename.lastIndexOf('.')
+  );
+
+  const thumbnailKey = `thumbnails/${nameWithoutExtension}.jpg`;
+
+  return getImageUrl(thumbnailKey);
+}
 // Delete S3 object
 async function deleteImage(key) {
   await s3.send(new DeleteObjectCommand({
@@ -65,5 +111,6 @@ module.exports = {
   uploadImage,
   uploadProfileImage,
   getImageUrl,
+  getThumbnailUrl,
   deleteImage
 };
